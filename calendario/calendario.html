@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário de Eventos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .calendar {
+            width: 90%;
+            max-width: 550px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .month {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #1877f2;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .month button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            margin-top: 12px;
+        }
+        .day {
+            padding: 12px;
+            background: #e4e6eb;
+            border-radius: 24px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .day:hover, .day.selected {
+            background-color: #1877f2; /* Azul claro para o hover */
+            color: white; /* Texto em branco para contraste */
+        }
+        .event-red { background: #ff4444; color: white; }
+        .event-green { background: #28a745; color: white; }
+        .event-blue { background: #007bff; color: white; }
+        .event-details {
+            margin-top: 20px;
+            background: #1877f2;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            display: none;
+            font-weight: bold;
+            text-align: left;
+        }
+        .legend {
+            width: 400px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="calendar">
+            <div class="month">
+                <button onclick="prevMonth()">&#60;</button>
+                <h2 id="month-year"></h2>
+                <button onclick="nextMonth()">&#62;</button>
+            </div>
+            <div class="days" id="calendar-days"></div>
+        </div>
+        <div class="legend" id="legend"></div>
+    </div>
+    <div id="event-details" class="event-details"></div>
+    
+    <script>
+        const events = {
+            '2025-06-16': { title: 'Treinamento de Segurança', color: 'event-red', start: '09:00', end: '12:00', description: 'Treinamento obrigatório para segurança no trabalho.', location: 'Auditório SEST SENAT' },
+            '2025-01-10': { title: 'Treinamento de Segurança', color: 'event-red', start: '09:00', end: '12:00', description: 'Treinamento obrigatório para segurança no trabalho.', location: 'Auditório SEST SENAT' },
+            '2025-02-10': { title: 'Treinamento de Segurança', color: 'event-red', start: '09:00', end: '12:00', description: 'Treinamento obrigatório para segurança no trabalho.', location: 'Auditório SEST SENAT' },
+            '2025-02-15': { title: 'Workshop de Saúde', color: 'event-green', start: '14:00', end: '17:00', description: 'Dicas e práticas para uma vida mais saudável.', location: 'Sala 02 SEST SENAT' },
+            '2025-02-20': { title: 'Palestra Motivacional', color: 'event-blue', start: '10:00', end: '11:30', description: 'Palestra inspiradora com especialistas.', location: 'Salão Principal' }
+        };
+        let currentMonth = new Date().getMonth();
+        let currentYear = 2025;
+
+        function prevMonth() {
+            if (currentMonth > 0) {
+                currentMonth--;
+            } else if (currentYear > 2025) {
+                currentYear--;
+                currentMonth = 11; // De volta para dezembro
+            }
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            if (currentMonth < 11) {
+                currentMonth++;
+            } else if (currentYear < 2025) {
+                currentYear++;
+                currentMonth = 0; // Voltar para janeiro
+            }
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+    const monthYear = document.getElementById("month-year");
+    const calendarDays = document.getElementById("calendar-days");
+    const legend = document.getElementById("legend");
+    calendarDays.innerHTML = "";
+    legend.innerHTML = ""; // Limpa a legenda para mostrar somente eventos do mês atual
+
+    let firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    // Obtém o nome do mês e deixa com a primeira letra maiúscula
+    let monthName = new Date(currentYear, currentMonth).toLocaleString('pt-BR', { month: 'long' });
+    monthName = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    monthYear.textContent = `${monthName} ${currentYear}`;
+
+    for (let i = 0; i < firstDay; i++) {
+        let emptyDiv = document.createElement("div");
+        calendarDays.appendChild(emptyDiv);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        let dateStr = `2025-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        let formattedDate = `${String(day).padStart(2, '0')}/${String(currentMonth + 1).padStart(2, '0')}/2025`;
+        let dayDiv = document.createElement("div");
+        dayDiv.textContent = day;
+        dayDiv.classList.add("day");
+        dayDiv.onclick = () => showEvent(dateStr, dayDiv, formattedDate);
+        
+        if (events[dateStr]) {
+            dayDiv.classList.add(events[dateStr].color);
+            // Formata a data no formato "dd/mm" para a legenda
+            let legendDate = `${String(day).padStart(2, '0')}/${String(currentMonth + 1).padStart(2, '0')}`;
+            legend.innerHTML += `<div class="legend-item"><div class="legend-color ${events[dateStr].color}"></div> ${legendDate} - ${events[dateStr].title}</div>`;
+        }
+        calendarDays.appendChild(dayDiv);
+    }
+}
+
+    </script>
+    <script>
+function showEvent(date, element, formattedDate) {
+    document.querySelectorAll('.day').forEach(day => day.classList.remove('selected'));
+    element.classList.add('selected');
+    const eventDetails = document.getElementById("event-details");
+
+    if (events[date]) {
+        const event = events[date];
+        let detailsHtml = `${formattedDate}<strong> - </strong> ${event.title}<br>`;
+        
+        // Exibe "Horário" somente se start e end estiverem definidos
+        if (event.start && event.end) {
+            detailsHtml += `<strong>Horário:</strong> ${event.start} - ${event.end}<br>`;
+        }
+        
+        // Exibe "Descrição" somente se existir
+        if (event.description) {
+            detailsHtml += `<strong>Descrição:</strong> ${event.description}<br>`;
+        }
+        
+        // Exibe "Local" somente se existir
+        if (event.location) {
+            detailsHtml += `<strong>Local:</strong> ${event.location}`;
+        }
+        
+        eventDetails.innerHTML = detailsHtml;
+        eventDetails.style.display = "block";
+    } else {
+        eventDetails.textContent = `Nenhum evento marcado para o dia ${formattedDate}.`;
+        eventDetails.style.display = "block";
+    }
+}
+
+        renderCalendar();
+    </script>
+</body>
+</html>
