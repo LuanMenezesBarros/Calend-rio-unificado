@@ -88,8 +88,48 @@ body {
     position: absolute;
     bottom: 20px;
     right: 20px;
+    padding: 20px;
+    text-align: center;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+
 }
 
 .footer img {
     width: 180px;
+}
+
+.logo-text {
+    font-size: 26px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    color: white; 
+}
+
+.bold {
+    font-weight: 900; 
+    color: white;
+}
+
+.light {
+    font-weight: 600; 
+    color: white;
+}
+
+.separator {
+    font-weight: bold;
+    color: white; 
+}
+
+.subtitle {
+    font-size: 16px;
+    font-weight: 400;
+    margin-top: 5px;
+    border-top: 2px solid white;
+    display: inline-block;
+    padding-top: 5px;
+    color: white; 
 }
