@@ -27,7 +27,6 @@ body {
     padding-right: 80px;
 }
 
-/* Fundo atualizado */
 .background {
     position: absolute;
     width: 100%;
@@ -35,7 +34,6 @@ body {
     background: linear-gradient(140deg, #002F6C 50%, #005BAC 50%);
 }
 
-/* Formas geométricas SVG */
 .svg-design {
     position: absolute;
     width: 100%;
@@ -45,7 +43,6 @@ body {
     opacity: 0.9;
 }
 
-/* Conteúdo alinhado à direita */
 .content {
     position: relative;
     text-align: right;
@@ -56,7 +53,6 @@ body {
     align-items: flex-end;
 }
 
-/* Caixa azul escura que contém título e subtítulo */
 .title-box {
     background: #003366;
     padding: 25px 50px;
@@ -83,7 +79,6 @@ body {
     margin-top: 10px;
 }
 
-/* Rodapé alinhado */
 .footer {
     position: absolute;
     bottom: 20px;
