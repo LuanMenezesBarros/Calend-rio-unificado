@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendário de Eventos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+    body {
+      font-family: 'Roboto', sans-serif;
+    }
+    /* Container principal com layout de duas colunas: área esquerda (calendário + legenda de cores) e legenda dinâmica */
+    .main-container {
+      display: flex;
+      gap: 20px;
+      width: 90%;
+      max-width: 1200px;
+      margin: 20px auto;
+    }
+    /* Container do calendário e da legenda de cores (lado esquerdo) */
+    .calendar-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Calendário - tamanho reduzido */
+    .calendar {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-bottom: 10px;
+    }
+    .month {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #e9ecef;
+      border-radius: 8px;
+    }
+    .month select {
+      font-size: 16px;
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      color: #333;
+    }
+    .month span#year-display {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+    .day-names {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .day-name {
+      padding: 6px 0;
+    }
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+    .day {
+      padding: 12px;
+      background: #e4e6eb;
+      border-radius: 24px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 1.2;
+      position: relative;
+    }
+    /* Cores dos eventos */
+    .event-yellow { background: #ffc107 !important; }
+    .event-gray { background: #6c757d !important; }
+    .event-orange { background: #fd7e14 !important; }
+    .day.event-yellow,
+    .day.event-gray,
+    .day.event-orange {
+      position: relative;
+      z-index: 1;
+    }
+    .day.event-yellow:after,
+    .day.event-gray:after,
+    .day.event-orange:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 50%;
+      z-index: -1;
+      opacity: 0.6;
+    }
+    .day.event-yellow:after { background-color: #ffc107; }
+    .day.event-gray:after { background-color: #6c757d; }
+    .day.event-orange:after { background-color: #fd7e14; }
+    /* Legenda estática de cores pequena, abaixo do calendário */
+    .static-legend {
+      padding: 10px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .static-legend .legend-item {
+      margin-bottom: 6px;
+    }
+    .static-legend .legend-color {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      margin-right: 8px;
+      vertical-align: middle;
+      border-radius: 50%;
+    }
+    .static-legend .event-yellow { background: #ffc107; }
+    .static-legend .event-gray { background: #6c757d; }
+    .static-legend .event-orange { background: #fd7e14; }
+    /* Legenda dinâmica – área ampliada ao lado do calendário */
+    .dynamic-legend {
+      flex: 2;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .dynamic-legend details {
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .dynamic-legend details summary {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: #e9ecef;
+      border-radius: 4px;
+      list-style: none;
+    }
+    .dynamic-legend details summary::-webkit-details-marker {
+      display: none;
+    }
+    .dynamic-legend details summary .date-tag {
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #fff;
+      font-weight: bold;
+    }
+    .dynamic-legend details summary .arrow {
+      margin-left: 8px;
+      font-size: 12px;
+    }
+    .dynamic-legend details > div {
+      background: #f0f0f0;
+      padding: 8px 10px;
+      border-top: 1px solid #ccc;
+      border-bottom-left-radius: 4px;
+      border-bottom-right-radius: 4px;
+      font-size: 14px;
+    }
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .main-container {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Área esquerda: Calendário + Legenda estática de cores -->
+    <div class="calendar-container">
+      <div class="calendar">
+        <div class="month">
+          <select id="month-selector" onchange="changeMonth()">
+            <option value="0">Janeiro</option>
+            <option value="1">Fevereiro</option>
+            <option value="2">Março</option>
+            <option value="3">Abril</option>
+            <option value="4">Maio</option>
+            <option value="5">Junho</option>
+            <option value="6">Julho</option>
+            <option value="7">Agosto</option>
+            <option value="8">Setembro</option>
+            <option value="9">Outubro</option>
+            <option value="10">Novembro</option>
+            <option value="11">Dezembro</option>
+          </select>
+          <span id="year-display">2025</span>
+        </div>
+        <div class="day-names">
+          <div class="day-name">D</div>
+          <div class="day-name">S</div>
+          <div class="day-name">T</div>
+          <div class="day-name">Q</div>
+          <div class="day-name">Q</div>
+          <div class="day-name">S</div>
+          <div class="day-name">S</div>
+        </div>
+        <div class="days" id="calendar-days"></div>
+      </div>
+      <!-- Legenda estática de cores pequena abaixo do calendário -->
+      <div class="static-legend">
+        <div class="legend-item"><span class="legend-color event-yellow"></span> Eventos Sistema Transporte</div>
+        <div class="legend-item"><span class="legend-color event-gray"></span> Outros Eventos</div>
+        <div class="legend-item"><span class="legend-color event-orange"></span> Feriados</div>
+      </div>
+    </div>
+    <!-- Legenda dinâmica -->
+    <div class="dynamic-legend" id="dynamic-legend"></div>
+  </div>
+  
+  <script>
+    const events = [
+      { DATA: '2025-06-16', NOME: 'Treinamento de Segurança', COR: 'event-yellow', DETALHES: 'Treinamento obrigatório para segurança no trabalho.', DATA_FIM: '2025-06-16' },
+      { DATA: '2025-06-16', NOME: 'Almoço de Integração', COR: 'event-orange', DETALHES: 'Integração com os novos colaboradores.' },
+      { DATA: '2025-02-10', NOME: 'Treinamento de Segurança', COR: 'event-yellow', DETALHES: 'Treinamento obrigatório para segurança no trabalho.' },
+      { DATA: '2025-02-15', NOME: 'Workshop de Saúde', COR: 'event-gray', DETALHES: 'Dicas e práticas para uma vida mais saudável.' },
+      { DATA: '2025-02-20', NOME: 'Palestra Motivacional', COR: 'event-orange', DETALHES: 'Palestra inspiradora com especialistas.' },
+      { DATA: '2025-03-01', DATA_FIM: '2025-03-03', NOME: 'Semana de Inovação', COR: 'event-gray', DETALHES: 'Eventos diários sobre inovação tecnológica.' }
+    ];
+    
+    let currentMonth = new Date().getMonth();
+    let currentYear = 2025;
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      const monthSelector = document.getElementById("month-selector");
+      monthSelector.value = currentMonth;
+      renderCalendar();
+    });
+    
+    function changeMonth() {
+      const monthSelector = document.getElementById("month-selector");
+      currentMonth = parseInt(monthSelector.value);
+      renderCalendar();
+    }
+    
+    function formatDate(dateStr) {
+      const parts = dateStr.split('-');
+      return `${parts[2]}/${parts[1]}`;
+    }
+    
+    function renderCalendar() {
+      const calendarDays = document.getElementById("calendar-days");
+      const dynamicLegend = document.getElementById("dynamic-legend");
+      calendarDays.innerHTML = "";
+      dynamicLegend.innerHTML = "";
+      
+      // Atualiza o display do ano
+      document.getElementById("year-display").textContent = currentYear;
+      
+      let firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      
+      // Células vazias para alinhamento
+      for (let i = 0; i < firstDay; i++) {
+        let emptyDiv = document.createElement("div");
+        calendarDays.appendChild(emptyDiv);
+      }
+      
+      // Preenche os dias do mês
+      for (let day = 1; day <= daysInMonth; day++) {
+        const currentDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        let dayDiv = document.createElement("div");
+        dayDiv.textContent = day;
+        dayDiv.classList.add("day");
+        let current = new Date(currentYear, currentMonth, day);
+        events.forEach(event => {
+          let start = new Date(event.DATA + 'T00:00:00');
+          let end = event.DATA_FIM ? new Date(event.DATA_FIM + 'T00:00:00') : start;
+          if (current >= new Date(start.getFullYear(), start.getMonth(), start.getDate()) &&
+              current <= new Date(end.getFullYear(), end.getMonth(), end.getDate())) {
+            dayDiv.classList.add(event.COR);
+          }
+        });
+        calendarDays.appendChild(dayDiv);
+      }
+      
+      // Constrói a legenda dinâmica – cada evento único (por DATA/DATA_FIM e NOME)
+      let legendEvents = [];
+      let firstOfMonth = new Date(currentYear, currentMonth, 1);
+      let lastOfMonth = new Date(currentYear, currentMonth + 1, 0);
+      
+      events.forEach(event => {
+        let start = new Date(event.DATA + 'T00:00:00');
+        let end = event.DATA_FIM ? new Date(event.DATA_FIM + 'T00:00:00') : start;
+        if (end < firstOfMonth || start > lastOfMonth) return;
+        let key = event.DATA + '|' + (event.DATA_FIM || event.DATA) + '|' + event.NOME;
+        if (!legendEvents.some(e => e.key === key)) {
+          legendEvents.push({ ...event, key });
+        }
+      });
+      
+      legendEvents.forEach(event => {
+        let detailsEl = document.createElement("details");
+        let summaryEl = document.createElement("summary");
+        summaryEl.style.display = "flex";
+        summaryEl.style.alignItems = "center";
+        summaryEl.style.justifyContent = "space-between";
+        
+        // Cria o span da data: se for período, exibe o período dentro da tag com a cor correspondente
+        let dateSpan = document.createElement("span");
+        dateSpan.classList.add("date-tag", event.COR);
+        if (event.DATA_FIM && event.DATA_FIM !== event.DATA) {
+          dateSpan.textContent = `${formatDate(event.DATA)} - ${formatDate(event.DATA_FIM)}`;
+        } else {
+          dateSpan.textContent = formatDate(event.DATA);
+        }
+        
+        // Cria o elemento para o nome do evento
+        let nameSpan = document.createElement("span");
+        nameSpan.textContent = event.NOME;
+        
+        // Cria a seta para indicar detalhes
+        let arrowSpan = document.createElement("span");
+        arrowSpan.classList.add("arrow");
+        arrowSpan.textContent = "▼";
+        
+        summaryEl.appendChild(dateSpan);
+        summaryEl.insertAdjacentElement("beforeend", nameSpan);
+        summaryEl.appendChild(arrowSpan);
+        detailsEl.appendChild(summaryEl);
+        
+        // Cria o conteúdo do dropdown com detalhes em box cinza claro
+        let contentDiv = document.createElement("div");
+        if (event.DETALHES) {
+          contentDiv.innerHTML += `<div>${event.DETALHES}</div>`;
+        }
+        detailsEl.appendChild(contentDiv);
+        
+        dynamicLegend.appendChild(detailsEl);
+      });
+    }
+  </script>
+</body>
+</html>
